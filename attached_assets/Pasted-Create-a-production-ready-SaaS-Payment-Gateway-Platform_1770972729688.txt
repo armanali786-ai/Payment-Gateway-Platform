@@ -1,0 +1,416 @@
+Create a production-ready SaaS Payment Gateway Platform named NexaPay using Python (3.11) and Django.
+
+The system must function similar to Razorpay:
+
+• Businesses register
+• Generate API keys
+• Developers install NexaPay SDK
+• Create payments using SDK
+• Hosted payment page opens
+• Payment processed (Simulated UPI/QR)
+• Commission calculated (1.5%)
+• Dashboard updates in real-time
+
+This must be a secure multi-tenant SaaS platform with strict data isolation.
+
+🏗 TECH STACK
+
+Backend:
+
+Django
+
+Django Rest Framework
+
+PostgreSQL
+
+JWT Authentication
+
+Celery + Redis
+
+Django Channels (WebSocket)
+
+Frontend:
+
+Django Templates
+
+Tailwind CSS
+
+Chart.js
+
+AOS or GSAP animations
+
+Dark fintech UI (Gradient + Glassmorphism)
+
+📁 PROJECT STRUCTURE
+
+nexapay/
+
+core/
+
+accounts/
+
+payments/
+
+dashboard/
+
+api/
+
+adminpanel/
+
+sdk/
+
+templates/
+
+static/
+
+manage.py
+
+🔐 MULTI-TENANT ISOLATION (CRITICAL)
+
+Every business must ONLY access its own:
+
+BusinessProfile
+
+API Keys
+
+Payments
+
+Commission
+
+Dashboard data
+
+NEVER use:
+Payment.objects.all()
+
+ALWAYS filter:
+Payment.objects.filter(business=request.user.businessprofile)
+
+Apply strict filtering in:
+Dashboard, Charts, API validation, Webhooks, Revenue calculations.
+
+No cross-business leakage allowed.
+
+👤 USER ROLES
+
+Business User
+
+Admin User
+
+Admin default:
+Username: admin
+Password: admin123
+
+Admin login separate from business login.
+
+🧑‍💼 BUSINESS FLOW
+
+On registration:
+
+Create empty BusinessProfile
+
+Do NOT auto-generate API key
+
+Do NOT create dummy payments
+
+On first login:
+Show message:
+"Generate your API Key to start accepting payments."
+
+Hide charts and revenue until API key exists.
+
+🔑 API KEY SYSTEM
+
+Button: "Generate API Key"
+
+Generate:
+
+PUBLIC_KEY (32 chars)
+
+SECRET_KEY (64 chars)
+
+Encrypt SECRET_KEY before saving.
+
+Model:
+APIKey:
+
+business (FK)
+
+public_key
+
+encrypted_secret_key
+
+created_at
+
+Validate PUBLIC_KEY via middleware.
+Allow regeneration.
+
+💳 PAYMENT API
+
+Endpoint:
+POST /api/create-payment/
+
+Header:
+Authorization: Bearer PUBLIC_KEY
+
+Input:
+
+amount
+
+currency
+
+customer_name
+
+customer_email
+
+callback_url
+
+Logic:
+commission = amount * 0.015
+net_amount = amount - commission
+
+Save Payment:
+
+business
+
+amount
+
+commission_amount
+
+net_amount
+
+status="created"
+
+Return:
+payment_url
+
+Apply rate limiting.
+
+💰 HOSTED PAYMENT PAGE
+
+Show:
+
+NexaPay branding
+
+Business logo
+
+Amount
+
+QR Code
+
+UPI ID
+
+Animated UI
+
+Button:
+"Simulate Payment Success"
+
+On success:
+
+Update status = success
+
+Trigger webhook (async via Celery)
+
+Send WebSocket update
+
+Show success animation
+
+🔔 WEBHOOK SYSTEM
+
+After success:
+POST to callback_url
+
+Payload:
+
+payment_id
+
+amount
+
+status
+
+signature (HMAC using SECRET_KEY)
+
+Implement signature verification.
+
+📊 BUSINESS DASHBOARD
+
+IF no API key:
+Show integration guide, zero values.
+
+IF API key but no payments:
+Revenue = 0
+Orders = 0
+Commission = 0
+Charts = zero arrays
+
+IF payments exist:
+Calculate dynamically:
+
+total_revenue
+total_commission
+net_settlement
+
+Charts:
+
+6 month revenue
+
+Commission graph
+
+Growth chart
+
+All filtered by business only.
+
+👑 ADMIN DASHBOARD
+
+Admin sees:
+
+Total Businesses
+
+Active Businesses
+
+Total Commission
+
+Monthly commission chart
+
+All transactions
+
+Company-wise commission table
+
+CSV export
+
+Admin revenue = sum(all commission_amount)
+
+📦 SDK SYSTEM
+
+Create Python SDK inside:
+
+sdk/nexapay/
+
+Files:
+
+init.py
+
+client.py
+
+utils.py
+
+Client class:
+
+class Client:
+def init(self, public_key):
+self.public_key = public_key
+
+def create_payment(self, amount, currency="INR", customer_name=None, customer_email=None):
+    # call NexaPay API
+    # return payment_url
+
+
+Install locally:
+pip install -e sdk/
+
+🔌 SDK EXAMPLE
+
+Python:
+
+import nexapay
+
+client = nexapay.Client(public_key="your_public_key")
+
+payment = client.create_payment(
+amount=1000,
+currency="INR"
+)
+
+print(payment["payment_url"])
+
+Also provide:
+
+React example (fetch API)
+
+Node.js example
+
+Java Spring Boot example
+
+⚡ REAL-TIME
+
+Use Django Channels:
+
+Push WebSocket event on payment success
+
+Auto-refresh dashboard
+
+🔐 SECURITY
+
+JWT Authentication
+
+API key validation middleware
+
+HMAC verification
+
+Encrypted secret keys
+
+Rate limiting
+
+CSRF protection
+
+Secure headers
+
+🎨 UI REQUIREMENTS
+
+Dark gradient theme
+
+Glassmorphism cards
+
+Animated counters
+
+Responsive layout
+
+Professional landing page
+
+Pricing section (1.5% commission)
+
+Developer documentation page
+
+🧪 TEST CASES
+
+Business A:
+
+Register
+
+Generate API key
+
+Create payment 1000
+
+Revenue = 1000
+
+Commission = 15
+
+Net = 985
+
+Business B:
+
+Register
+
+Do NOT generate API key
+
+Dashboard shows 0
+
+Cannot see Business A data
+
+Strict isolation required.
+
+⚙️ DEPLOYMENT
+
+Use .env config
+
+Must run on Replit
+
+Fully database-driven
+
+No dummy hardcoded data
+
+Production-ready structure
+
+✅ This version fits within Replit limits
+✅ Keeps all core SaaS logic
+✅ Keeps SDK + Multi-tenant + Commission
+✅ Clean, professional, scalable
