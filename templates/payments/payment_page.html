@@ -1,0 +1,108 @@
+{% extends 'base.html' %}
+{% block title %}Pay &#8377;{{ payment.amount }} - NexaPay{% endblock %}
+{% block extra_head %}
+<style>
+    @keyframes pulse-glow { 0%, 100% { box-shadow: 0 0 20px rgba(102,126,234,0.3); } 50% { box-shadow: 0 0 40px rgba(102,126,234,0.6); } }
+    .pulse-glow { animation: pulse-glow 2s infinite; }
+    @keyframes checkmark { 0% { transform: scale(0); } 50% { transform: scale(1.2); } 100% { transform: scale(1); } }
+    .checkmark { animation: checkmark 0.5s ease-out; }
+    @keyframes confetti { 0% { opacity: 1; transform: translateY(0) rotate(0deg); } 100% { opacity: 0; transform: translateY(-100px) rotate(720deg); } }
+    .success-overlay { display: none; position: fixed; inset: 0; z-index: 100; background: rgba(0,0,0,0.8); backdrop-filter: blur(10px); }
+    .success-overlay.show { display: flex; }
+</style>
+{% endblock %}
+{% block content %}
+<div class="min-h-screen flex items-center justify-center px-6 py-12">
+    <div class="absolute inset-0 overflow-hidden">
+        <div class="absolute -top-40 -right-40 w-96 h-96 bg-purple-600/10 rounded-full blur-3xl"></div>
+        <div class="absolute -bottom-40 -left-40 w-96 h-96 bg-blue-600/10 rounded-full blur-3xl"></div>
+    </div>
+
+    <div class="glass-strong rounded-3xl p-8 md:p-10 w-full max-w-md relative z-10 fade-in glow" id="paymentCard">
+        <div class="text-center mb-6">
+            <div class="gradient-text text-2xl font-bold mb-1">NexaPay</div>
+            <p class="text-gray-400 text-sm">Secure Payment Gateway</p>
+        </div>
+
+        <div class="text-center mb-8">
+            <p class="text-gray-400 text-sm mb-1">Pay to {{ payment.business.business_name }}</p>
+            <p class="text-5xl font-black text-white mb-2">&#8377;{{ payment.amount }}</p>
+            <p class="text-gray-500 text-sm">{{ payment.currency }}</p>
+        </div>
+
+        {% if payment.status == 'success' %}
+        <div class="text-center py-8">
+            <div class="text-6xl mb-4 checkmark">&#9989;</div>
+            <h2 class="text-2xl font-bold text-green-400 mb-2">Payment Successful!</h2>
+            <p class="text-gray-400 text-sm">Payment ID: {{ payment.id }}</p>
+        </div>
+        {% else %}
+        <div class="mb-8">
+            <div class="glass rounded-2xl p-6 text-center mb-4">
+                <p class="text-gray-400 text-sm mb-3">Scan QR Code to Pay</p>
+                <div class="inline-block bg-white p-3 rounded-xl pulse-glow">
+                    <img src="data:image/png;base64,{{ qr_code }}" alt="QR Code" class="w-48 h-48">
+                </div>
+            </div>
+            <div class="glass rounded-xl p-4 text-center">
+                <p class="text-gray-400 text-xs mb-1">UPI ID</p>
+                <p class="text-white font-mono text-sm">{{ upi_id }}</p>
+            </div>
+        </div>
+
+        {% if payment.customer_name %}
+        <div class="glass rounded-xl p-4 mb-6">
+            <div class="flex justify-between text-sm">
+                <span class="text-gray-400">Customer</span>
+                <span class="text-white">{{ payment.customer_name }}</span>
+            </div>
+            {% if payment.customer_email %}
+            <div class="flex justify-between text-sm mt-2">
+                <span class="text-gray-400">Email</span>
+                <span class="text-white">{{ payment.customer_email }}</span>
+            </div>
+            {% endif %}
+        </div>
+        {% endif %}
+
+        <button onclick="simulatePayment()" id="payBtn" class="w-full btn-primary py-4 rounded-xl text-white font-bold text-lg">
+            Simulate Payment Success
+        </button>
+        <p class="text-gray-500 text-xs text-center mt-3">This is a simulated payment environment</p>
+        {% endif %}
+    </div>
+</div>
+
+<div class="success-overlay" id="successOverlay">
+    <div class="flex flex-col items-center justify-center w-full fade-in">
+        <div class="text-8xl mb-6 checkmark">&#9989;</div>
+        <h2 class="text-3xl font-bold text-white mb-2">Payment Successful!</h2>
+        <p class="text-gray-400 mb-2">&#8377;{{ payment.amount }} paid to {{ payment.business.business_name }}</p>
+        <p class="text-gray-500 text-sm">Payment ID: {{ payment.id }}</p>
+    </div>
+</div>
+
+{% if payment.status != 'success' %}
+<script>
+async function simulatePayment() {
+    const btn = document.getElementById('payBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="animate-pulse">Processing...</span>';
+    try {
+        const res = await fetch('/payment/{{ payment.id }}/{{ payment.payment_token }}/simulate-success/', { method: 'POST' });
+        const data = await res.json();
+        if (data.status === 'success') {
+            document.getElementById('successOverlay').classList.add('show');
+            setTimeout(() => { location.reload(); }, 3000);
+        } else {
+            btn.innerHTML = 'Error: ' + (data.error || 'Try again');
+            btn.disabled = false;
+        }
+    } catch(e) {
+        btn.innerHTML = 'Network error. Try again.';
+        btn.disabled = false;
+    }
+}
+</script>
+{% endif %}
+{% endblock %}

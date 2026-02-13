@@ -1,0 +1,206 @@
+{% extends 'base.html' %}
+{% block title %}Dashboard - NexaPay{% endblock %}
+{% block content %}
+<nav class="fixed top-0 w-full z-50 glass">
+    <div class="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
+        <a href="{% url 'dashboard:home' %}" class="text-2xl font-bold gradient-text">NexaPay</a>
+        <div class="flex items-center space-x-6">
+            <span class="text-gray-400 text-sm hidden md:block">{{ profile.business_name }}</span>
+            <a href="{% url 'accounts:logout' %}" class="text-gray-300 hover:text-white transition text-sm">Logout</a>
+        </div>
+    </div>
+</nav>
+
+<div class="pt-24 pb-16 px-6 max-w-7xl mx-auto">
+    <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8">
+        <div>
+            <h1 class="text-3xl font-bold text-white mb-1">Dashboard</h1>
+            <p class="text-gray-400">Welcome, {{ profile.business_name }}</p>
+        </div>
+        {% if has_api_key %}
+        <form method="post" action="{% url 'accounts:generate_api_key' %}" onsubmit="return confirm('This will replace your current API key. Continue?')">
+            {% csrf_token %}
+            <button type="submit" class="mt-4 md:mt-0 glass px-5 py-2.5 rounded-xl text-purple-300 hover:text-white text-sm font-medium transition">Regenerate API Key</button>
+        </form>
+        {% endif %}
+    </div>
+
+    {% if messages %}
+    {% for message in messages %}
+    <div class="{% if message.tags == 'success' %}bg-green-500/10 border-green-500/20 text-green-400{% else %}bg-red-500/10 border-red-500/20 text-red-400{% endif %} border px-4 py-3 rounded-xl mb-6 text-sm">{{ message }}</div>
+    {% endfor %}
+    {% endif %}
+
+    {% if secret_key_display %}
+    <div class="bg-yellow-500/10 border border-yellow-500/20 rounded-2xl p-6 mb-8">
+        <h3 class="text-yellow-400 font-semibold mb-2">Your Secret Key (save it now!)</h3>
+        <p class="text-yellow-300/80 text-xs mb-3">This key will only be shown once. Copy and store it securely.</p>
+        <div class="bg-black/30 rounded-xl p-3 flex items-center justify-between">
+            <code class="text-yellow-300 text-sm break-all" id="secretKey">{{ secret_key_display }}</code>
+            <button onclick="navigator.clipboard.writeText(document.getElementById('secretKey').textContent);this.textContent='Copied!'" class="ml-3 text-yellow-400 hover:text-yellow-300 text-xs font-medium whitespace-nowrap">Copy</button>
+        </div>
+    </div>
+    {% endif %}
+
+    {% if not has_api_key %}
+    <div class="glass-strong rounded-3xl p-10 text-center glow mb-8">
+        <div class="text-5xl mb-4">&#128273;</div>
+        <h2 class="text-2xl font-bold text-white mb-3">Generate Your API Key</h2>
+        <p class="text-gray-400 mb-6 max-w-md mx-auto">To start accepting payments, you need to generate your API keys. Your Public Key is used for API calls, and your Secret Key is used for webhook verification.</p>
+        <form method="post" action="{% url 'accounts:generate_api_key' %}">
+            {% csrf_token %}
+            <button type="submit" class="btn-primary px-8 py-3 rounded-xl text-white font-semibold">Generate API Key</button>
+        </form>
+    </div>
+
+    <div class="glass rounded-2xl p-8">
+        <h3 class="text-xl font-bold text-white mb-4">Quick Integration Guide</h3>
+        <div class="space-y-3 text-gray-300 text-sm">
+            <p>1. Generate your API key using the button above</p>
+            <p>2. Use the Public Key in API requests as a Bearer token</p>
+            <p>3. Create payments via <code class="bg-black/30 px-2 py-1 rounded text-purple-300">POST /api/create-payment/</code></p>
+            <p>4. Redirect customers to the returned payment URL</p>
+            <p>5. Verify webhook signatures with your Secret Key</p>
+        </div>
+        <a href="{% url 'landing:docs' %}" class="inline-block mt-4 text-purple-400 hover:text-purple-300 text-sm font-medium">View Full Documentation &rarr;</a>
+    </div>
+    {% else %}
+
+    {% if api_key %}
+    <div class="glass rounded-2xl p-6 mb-8">
+        <h3 class="text-white font-semibold mb-3">Your API Key</h3>
+        <div class="flex items-center bg-black/30 rounded-xl p-3">
+            <span class="text-gray-400 text-sm mr-2">Public Key:</span>
+            <code class="text-purple-300 text-sm" id="pubKey">{{ api_key.public_key }}</code>
+            <button onclick="navigator.clipboard.writeText(document.getElementById('pubKey').textContent);this.textContent='Copied!'" class="ml-auto text-purple-400 hover:text-purple-300 text-xs font-medium">Copy</button>
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+        <div class="glass rounded-2xl p-6 stat-card card-hover">
+            <p class="text-gray-400 text-sm mb-1">Total Revenue</p>
+            <p class="text-3xl font-bold text-white" id="animRevenue">&#8377;{{ total_revenue }}</p>
+        </div>
+        <div class="glass rounded-2xl p-6 stat-card card-hover" style="animation-delay: 0.1s;">
+            <p class="text-gray-400 text-sm mb-1">Total Orders</p>
+            <p class="text-3xl font-bold text-white">{{ total_orders }}</p>
+        </div>
+        <div class="glass rounded-2xl p-6 stat-card card-hover" style="animation-delay: 0.2s;">
+            <p class="text-gray-400 text-sm mb-1">Commission Paid</p>
+            <p class="text-3xl font-bold text-purple-400">&#8377;{{ total_commission }}</p>
+        </div>
+        <div class="glass rounded-2xl p-6 stat-card card-hover" style="animation-delay: 0.3s;">
+            <p class="text-gray-400 text-sm mb-1">Net Settlement</p>
+            <p class="text-3xl font-bold text-green-400">&#8377;{{ net_settlement }}</p>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+        <div class="glass rounded-2xl p-6">
+            <h3 class="text-white font-semibold mb-4">Revenue (Last 6 Months)</h3>
+            <canvas id="revenueChart" height="200"></canvas>
+        </div>
+        <div class="glass rounded-2xl p-6">
+            <h3 class="text-white font-semibold mb-4">Commission (Last 6 Months)</h3>
+            <canvas id="commissionChart" height="200"></canvas>
+        </div>
+    </div>
+
+    <div class="glass rounded-2xl p-6">
+        <h3 class="text-white font-semibold mb-4">Recent Payments</h3>
+        {% if recent_payments %}
+        <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+                <thead>
+                    <tr class="text-gray-400 border-b border-gray-700">
+                        <th class="py-3 text-left">ID</th>
+                        <th class="py-3 text-left">Amount</th>
+                        <th class="py-3 text-left">Commission</th>
+                        <th class="py-3 text-left">Net</th>
+                        <th class="py-3 text-left">Status</th>
+                        <th class="py-3 text-left">Customer</th>
+                        <th class="py-3 text-left">Date</th>
+                    </tr>
+                </thead>
+                <tbody class="text-gray-300">
+                    {% for p in recent_payments %}
+                    <tr class="border-b border-gray-800 hover:bg-white/5 transition">
+                        <td class="py-3 font-mono text-xs">{{ p.id|truncatechars:12 }}</td>
+                        <td class="py-3">&#8377;{{ p.amount }}</td>
+                        <td class="py-3 text-purple-400">&#8377;{{ p.commission_amount }}</td>
+                        <td class="py-3 text-green-400">&#8377;{{ p.net_amount }}</td>
+                        <td class="py-3">
+                            <span class="px-2 py-1 rounded-lg text-xs font-medium {% if p.status == 'success' %}bg-green-500/20 text-green-400{% elif p.status == 'created' %}bg-yellow-500/20 text-yellow-400{% else %}bg-red-500/20 text-red-400{% endif %}">{{ p.status }}</span>
+                        </td>
+                        <td class="py-3">{{ p.customer_name|default:"-" }}</td>
+                        <td class="py-3 text-gray-500 text-xs">{{ p.created_at|date:"M d, Y H:i" }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <p class="text-gray-500 text-center py-8">No payments yet. Use your API key to create your first payment.</p>
+        {% endif %}
+    </div>
+    {% endif %}
+</div>
+
+<footer class="py-8 px-6 border-t border-gray-800 text-center text-gray-500 text-sm">
+    NexaPay. All rights reserved.
+</footer>
+{% endblock %}
+
+{% block scripts %}
+{% if has_api_key %}
+<script>
+const labels = {{ chart_labels|safe }};
+const revenueData = {{ chart_revenue|safe }};
+const commissionData = {{ chart_commission|safe }};
+
+const chartOptions = {
+    responsive: true,
+    plugins: { legend: { display: false } },
+    scales: {
+        x: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#9ca3af' } },
+        y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#9ca3af' } }
+    }
+};
+
+if (document.getElementById('revenueChart')) {
+    new Chart(document.getElementById('revenueChart'), {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [{
+                data: revenueData,
+                backgroundColor: 'rgba(102,126,234,0.5)',
+                borderColor: '#667eea',
+                borderWidth: 1,
+                borderRadius: 8,
+            }]
+        },
+        options: chartOptions
+    });
+}
+
+if (document.getElementById('commissionChart')) {
+    new Chart(document.getElementById('commissionChart'), {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [{
+                data: commissionData,
+                borderColor: '#a855f7',
+                backgroundColor: 'rgba(168,85,247,0.1)',
+                tension: 0.4,
+                fill: true,
+            }]
+        },
+        options: chartOptions
+    });
+}
+</script>
+{% endif %}
+{% endblock %}

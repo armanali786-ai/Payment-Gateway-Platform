@@ -1,0 +1,145 @@
+{% extends 'base.html' %}
+{% block title %}Admin Dashboard - NexaPay{% endblock %}
+{% block content %}
+<nav class="fixed top-0 w-full z-50 glass">
+    <div class="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
+        <a href="{% url 'adminpanel:dashboard' %}" class="text-2xl font-bold gradient-text">NexaPay Admin</a>
+        <div class="flex items-center space-x-6">
+            <a href="{% url 'adminpanel:export_csv' %}" class="glass px-4 py-2 rounded-lg text-purple-300 hover:text-white text-sm transition">Export CSV</a>
+            <a href="{% url 'adminpanel:logout' %}" class="text-gray-300 hover:text-white transition text-sm">Logout</a>
+        </div>
+    </div>
+</nav>
+
+<div class="pt-24 pb-16 px-6 max-w-7xl mx-auto">
+    <h1 class="text-3xl font-bold text-white mb-8">Admin Dashboard</h1>
+
+    <div class="grid grid-cols-1 md:grid-cols-5 gap-6 mb-8">
+        <div class="glass rounded-2xl p-6 stat-card card-hover">
+            <p class="text-gray-400 text-sm mb-1">Total Businesses</p>
+            <p class="text-3xl font-bold text-white">{{ total_businesses }}</p>
+        </div>
+        <div class="glass rounded-2xl p-6 stat-card card-hover">
+            <p class="text-gray-400 text-sm mb-1">Active Businesses</p>
+            <p class="text-3xl font-bold text-green-400">{{ active_businesses }}</p>
+        </div>
+        <div class="glass rounded-2xl p-6 stat-card card-hover">
+            <p class="text-gray-400 text-sm mb-1">Total Revenue</p>
+            <p class="text-3xl font-bold text-white">&#8377;{{ total_revenue }}</p>
+        </div>
+        <div class="glass rounded-2xl p-6 stat-card card-hover">
+            <p class="text-gray-400 text-sm mb-1">Platform Commission</p>
+            <p class="text-3xl font-bold text-purple-400">&#8377;{{ total_commission }}</p>
+        </div>
+        <div class="glass rounded-2xl p-6 stat-card card-hover">
+            <p class="text-gray-400 text-sm mb-1">Total Transactions</p>
+            <p class="text-3xl font-bold text-white">{{ total_transactions }}</p>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+        <div class="glass rounded-2xl p-6">
+            <h3 class="text-white font-semibold mb-4">Monthly Commission</h3>
+            <canvas id="commissionChart" height="200"></canvas>
+        </div>
+        <div class="glass rounded-2xl p-6">
+            <h3 class="text-white font-semibold mb-4">Company-wise Commission</h3>
+            {% if business_data %}
+            <div class="overflow-x-auto">
+                <table class="w-full text-sm">
+                    <thead>
+                        <tr class="text-gray-400 border-b border-gray-700">
+                            <th class="py-2 text-left">Business</th>
+                            <th class="py-2 text-left">Revenue</th>
+                            <th class="py-2 text-left">Commission</th>
+                            <th class="py-2 text-left">Orders</th>
+                        </tr>
+                    </thead>
+                    <tbody class="text-gray-300">
+                        {% for b in business_data %}
+                        <tr class="border-b border-gray-800">
+                            <td class="py-2">{{ b.business__business_name }}</td>
+                            <td class="py-2">&#8377;{{ b.total }}</td>
+                            <td class="py-2 text-purple-400">&#8377;{{ b.commission }}</td>
+                            <td class="py-2">{{ b.count }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <p class="text-gray-500 text-center py-8">No data yet.</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="glass rounded-2xl p-6">
+        <h3 class="text-white font-semibold mb-4">All Transactions</h3>
+        {% if recent_transactions %}
+        <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+                <thead>
+                    <tr class="text-gray-400 border-b border-gray-700">
+                        <th class="py-3 text-left">ID</th>
+                        <th class="py-3 text-left">Business</th>
+                        <th class="py-3 text-left">Amount</th>
+                        <th class="py-3 text-left">Commission</th>
+                        <th class="py-3 text-left">Status</th>
+                        <th class="py-3 text-left">Customer</th>
+                        <th class="py-3 text-left">Date</th>
+                    </tr>
+                </thead>
+                <tbody class="text-gray-300">
+                    {% for p in recent_transactions %}
+                    <tr class="border-b border-gray-800 hover:bg-white/5 transition">
+                        <td class="py-3 font-mono text-xs">{{ p.id|truncatechars:12 }}</td>
+                        <td class="py-3">{{ p.business.business_name }}</td>
+                        <td class="py-3">&#8377;{{ p.amount }}</td>
+                        <td class="py-3 text-purple-400">&#8377;{{ p.commission_amount }}</td>
+                        <td class="py-3">
+                            <span class="px-2 py-1 rounded-lg text-xs font-medium {% if p.status == 'success' %}bg-green-500/20 text-green-400{% elif p.status == 'created' %}bg-yellow-500/20 text-yellow-400{% else %}bg-red-500/20 text-red-400{% endif %}">{{ p.status }}</span>
+                        </td>
+                        <td class="py-3">{{ p.customer_name|default:"-" }}</td>
+                        <td class="py-3 text-gray-500 text-xs">{{ p.created_at|date:"M d, Y H:i" }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <p class="text-gray-500 text-center py-8">No transactions yet.</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const labels = {{ chart_labels|safe }};
+const commissionData = {{ chart_commission|safe }};
+
+if (document.getElementById('commissionChart')) {
+    new Chart(document.getElementById('commissionChart'), {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [{
+                data: commissionData,
+                backgroundColor: 'rgba(168,85,247,0.5)',
+                borderColor: '#a855f7',
+                borderWidth: 1,
+                borderRadius: 8,
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: { legend: { display: false } },
+            scales: {
+                x: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#9ca3af' } },
+                y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#9ca3af' } }
+            }
+        }
+    });
+}
+</script>
+{% endblock %}

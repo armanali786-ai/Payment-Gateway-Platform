@@ -1,0 +1,62 @@
+{% extends 'base.html' %}
+{% block title %}Pricing - NexaPay{% endblock %}
+{% block content %}
+<nav class="fixed top-0 w-full z-50 glass">
+    <div class="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
+        <a href="/" class="text-2xl font-bold gradient-text">NexaPay</a>
+        <div class="flex items-center space-x-6">
+            <a href="/" class="text-gray-300 hover:text-white transition">Home</a>
+            <a href="{% url 'landing:docs' %}" class="text-gray-300 hover:text-white transition">Docs</a>
+            <a href="{% url 'accounts:login' %}" class="text-gray-300 hover:text-white transition">Login</a>
+        </div>
+    </div>
+</nav>
+
+<div class="pt-32 pb-20 px-6">
+    <div class="max-w-4xl mx-auto text-center">
+        <h1 class="text-4xl md:text-5xl font-bold mb-4 gradient-text">Simple, Transparent Pricing</h1>
+        <p class="text-gray-400 text-lg mb-16">No hidden fees. No monthly charges. Just pay per transaction.</p>
+
+        <div class="glass-strong rounded-3xl p-12 glow max-w-lg mx-auto card-hover">
+            <div class="text-purple-400 font-semibold text-sm uppercase tracking-wider mb-4">Pay As You Go</div>
+            <div class="text-7xl font-black text-white mb-2">1.5%</div>
+            <p class="text-gray-400 text-lg mb-8">per successful transaction</p>
+            <ul class="text-left space-y-4 mb-10">
+                <li class="flex items-center text-gray-300"><span class="text-green-400 mr-3 text-lg">&#10003;</span> No setup fees</li>
+                <li class="flex items-center text-gray-300"><span class="text-green-400 mr-3 text-lg">&#10003;</span> No monthly charges</li>
+                <li class="flex items-center text-gray-300"><span class="text-green-400 mr-3 text-lg">&#10003;</span> Real-time dashboard</li>
+                <li class="flex items-center text-gray-300"><span class="text-green-400 mr-3 text-lg">&#10003;</span> Webhook notifications</li>
+                <li class="flex items-center text-gray-300"><span class="text-green-400 mr-3 text-lg">&#10003;</span> Multi-language SDKs</li>
+                <li class="flex items-center text-gray-300"><span class="text-green-400 mr-3 text-lg">&#10003;</span> HMAC security</li>
+                <li class="flex items-center text-gray-300"><span class="text-green-400 mr-3 text-lg">&#10003;</span> CSV export</li>
+            </ul>
+            <a href="{% url 'accounts:register' %}" class="btn-primary block w-full py-4 rounded-xl text-white font-bold text-lg text-center">Get Started Free</a>
+        </div>
+
+        <div class="mt-16 glass rounded-2xl p-8 text-left">
+            <h3 class="text-xl font-bold text-white mb-4">Pricing Example</h3>
+            <div class="overflow-x-auto">
+                <table class="w-full text-sm">
+                    <thead>
+                        <tr class="text-gray-400 border-b border-gray-700">
+                            <th class="py-3 text-left">Transaction Amount</th>
+                            <th class="py-3 text-left">Commission (1.5%)</th>
+                            <th class="py-3 text-left">You Receive</th>
+                        </tr>
+                    </thead>
+                    <tbody class="text-gray-300">
+                        <tr class="border-b border-gray-800"><td class="py-3">&#8377;1,000</td><td class="py-3">&#8377;15.00</td><td class="py-3 text-green-400">&#8377;985.00</td></tr>
+                        <tr class="border-b border-gray-800"><td class="py-3">&#8377;5,000</td><td class="py-3">&#8377;75.00</td><td class="py-3 text-green-400">&#8377;4,925.00</td></tr>
+                        <tr class="border-b border-gray-800"><td class="py-3">&#8377;10,000</td><td class="py-3">&#8377;150.00</td><td class="py-3 text-green-400">&#8377;9,850.00</td></tr>
+                        <tr><td class="py-3">&#8377;1,00,000</td><td class="py-3">&#8377;1,500.00</td><td class="py-3 text-green-400">&#8377;98,500.00</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<footer class="py-8 px-6 border-t border-gray-800 text-center text-gray-500 text-sm">
+    NexaPay. All rights reserved.
+</footer>
+{% endblock %}
